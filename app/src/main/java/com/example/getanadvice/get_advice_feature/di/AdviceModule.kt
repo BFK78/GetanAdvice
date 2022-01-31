@@ -8,6 +8,7 @@ import com.example.getanadvice.get_advice_feature.domain.use_cases.GetAnAdviceUs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.features.json.*
@@ -16,7 +17,7 @@ import io.ktor.client.features.logging.*
 import javax.inject.Singleton
 
 @Module
-@InstallIn
+@InstallIn(SingletonComponent::class)
 object AdviceModule {
 
     @Provides

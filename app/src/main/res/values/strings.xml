@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Get An Advice</string>
     <string name="home_advise">Do you need a free advice?</string>
+    <string name="yes">Yes</string>
 </resources>

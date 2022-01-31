@@ -14,13 +14,13 @@ class AdviceRepositoryImplementation(
 ): AdviceRepository {
 
     override fun getAnAdvice(): Flow<Resources<Advice>> = flow {
-        emit(Resources.Loading())
+        emit(Resources.Loading(data = Advice(id = 0, "Loading....")))
         try {
             val advice = service.getAdvice().toAdvice()
             emit(Resources.Success(data = advice))
         }catch (e: Exception) {
             Log.i("Error" , e.message.toString())
-            emit(Resources.Error(message = e.message.toString()))
+            emit(Resources.Error(data = Advice(id = 0, "Loading...."), message = e.message.toString()))
         }
     }
 }
