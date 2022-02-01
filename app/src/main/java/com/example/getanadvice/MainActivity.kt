@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.getanadvice.get_advice_feature.presentation.advicescreen.AdviceViewModel
 import com.example.getanadvice.get_advice_feature.presentation.common.ChoosingArc
+import com.example.getanadvice.get_advice_feature.presentation.common.MainArch
 import com.example.getanadvice.ui.theme.GetAnAdviceTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,22 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GetAnAdviceTheme {
-                val initial = remember {
-                    mutableStateOf(Offset.Zero)
-                }
-
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .onGloballyPositioned {
-                        initial.value = it.boundsInRoot().bottomRight
-                        Log.i("window", it.boundsInRoot().bottomRight.toString())
-                    }) {
-                    if (initial.value != Offset.Zero) {
-                        ChoosingArc(
-                            initial = initial.value
-                        )
-                    }
-                }
+                MainArch()
             }
         }
     }
