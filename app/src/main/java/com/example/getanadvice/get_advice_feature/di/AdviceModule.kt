@@ -11,9 +11,11 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.*
 import io.ktor.client.engine.android.*
-import io.ktor.client.features.json.*
+import io.ktor.client.features.json.JsonFeature
+import kotlinx.serialization.json.Json
 import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
+import io.ktor.http.*
 import javax.inject.Singleton
 
 @Module
@@ -28,6 +30,7 @@ object AdviceModule {
                 level = LogLevel.ALL
             }
             install(JsonFeature) {
+                acceptContentTypes = acceptContentTypes + ContentType.Any
                 serializer = KotlinxSerializer()
             }
         }

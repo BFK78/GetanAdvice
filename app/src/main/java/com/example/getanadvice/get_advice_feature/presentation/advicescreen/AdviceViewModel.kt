@@ -7,8 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.getanadvice.core.Resources
 import com.example.getanadvice.get_advice_feature.domain.use_cases.GetAnAdviceUserCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,10 +18,18 @@ class AdviceViewModel @Inject constructor(
     private val _state = mutableStateOf(AdviceState())
     val state: State<AdviceState> = _state
 
+    private val _toastEvent =  MutableSharedFlow<String>()
+    val toastEvent = _toastEvent.asSharedFlow()
+
+    init {
+        getAnAdvice()
+    }
+
     fun getAnAdvice() {
         getAnAdviceUserCase().onEach {
             when(it) {
                 is Resources.Error -> {
+                    _toastEvent.emit(it.message ?: "Unknown Error")
                     _state.value = state.value.copy(
                         isLoading = false
                     )

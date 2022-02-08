@@ -7,6 +7,7 @@ import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 
 // Set of Material typography styles to start with
@@ -18,15 +19,15 @@ val Typography = Typography(
     ),
     h5 = TextStyle(
         fontFamily = prata,
-        fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
-        color = Color.White
+        color = Color.White,
+        textAlign = TextAlign.Center
     ),
     h4 = TextStyle(
         fontFamily = prata,
-        fontWeight = FontWeight.SemiBold,
         fontSize = 20.sp,
-        color = Color.White
+        color = Color.White,
+        textAlign = TextAlign.Center
     )
     /* Other default text styles to override
     button = TextStyle(

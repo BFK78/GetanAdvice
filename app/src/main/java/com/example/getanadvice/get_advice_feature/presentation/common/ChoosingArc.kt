@@ -1,10 +1,8 @@
 package com.example.getanadvice.get_advice_feature.presentation.common
 
 import android.util.Log
-import android.view.MotionEvent
 import androidx.compose.animation.core.*
 import androidx.compose.animation.splineBasedDecay
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
@@ -12,10 +10,9 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
@@ -23,12 +20,19 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.widget.ConstraintSet
+import com.example.getanadvice.get_advice_feature.presentation.Screen
 import kotlinx.coroutines.*
 
 @Composable
-fun MainArch() {
-    val initial = remember {
+fun MainArch(
+    text: String,
+    onNavigate: (String) -> Unit
+) {
+    val initialR = remember {
+        mutableStateOf(Offset.Zero)
+    }
+
+    val initialL = remember {
         mutableStateOf(Offset.Zero)
     }
 
@@ -40,167 +44,117 @@ fun MainArch() {
         .fillMaxSize()
         .onGloballyPositioned {
             val intOffset = Offset(it.size.width / 2f, it.size.height / 2f)
-            initial.value = it.boundsInRoot().bottomRight
-            maxRadius.value = (initial.value - intOffset).getDistance()
+            initialR.value = it.boundsInRoot().bottomRight
+            initialL.value = it.boundsInRoot().bottomLeft
+            maxRadius.value = (initialR.value - intOffset).getDistance()
         }
     ) {
-        if (initial.value != Offset.Zero) {
-            AlternativeChoosingArc(initial = initial.value, maxRadius = maxRadius.value)
+        if (initialR.value != Offset.Zero) {
+            AlternativeChoosingArc(initialR = initialR.value, maxRadius = maxRadius.value, initialL = initialL.value,text = text, onNavigate = onNavigate)
         }
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AlternativeChoosingArc(
-    background: Color = MaterialTheme.colors.primary,
-    initial: Offset,
-    maxRadius: Float
+    yesBackground: Color = MaterialTheme.colors.primaryVariant,
+    noBackground: Color = MaterialTheme.colors.secondary,
+    initialR: Offset?,
+    initialL: Offset?,
+    maxRadius: Float,
+    text: String,
+    onNavigate: (String) -> Unit
 ) {
-    val boxSize = -250f
-
-    var touchOffset by remember {
-        mutableStateOf(Offset.Zero)
+    var destination by remember {
+        mutableStateOf("")
     }
 
-    val scope = rememberCoroutineScope()
+    var onDragR by remember {
+        mutableStateOf(false)
+    }
+    var onDragL by remember {
+        mutableStateOf(false)
+    }
+
+    val alphaL by animateFloatAsState(targetValue = if (onDragR) 0f else 1f,
+    animationSpec = tween(500))
+
+    val alphaR by animateFloatAsState(targetValue = if (onDragL) 0f else 1f,
+        animationSpec = tween(500))
+
+    val boxSize = -250f
 
     var navigate by remember {
         mutableStateOf(false)
     }
 
-    val circleRadius = remember {
+    val circleRadiusR = remember {
         Animatable(600f)
     }
 
-    Log.i("maxRadius" , maxRadius.toString())
-
-    val offsetX by remember {
-        mutableStateOf(initial.x - boxSize)
+    val offsetXR by remember {
+        mutableStateOf(initialR?.x?.minus(boxSize) ?: 0f)
     }
 
-    val offsetY by remember {
-        mutableStateOf(initial.y - boxSize)
+    val offsetYR by remember {
+        mutableStateOf(initialR?.y?.minus(boxSize) ?: 0f)
+    }
+
+    val circleRadiusL = remember {
+        Animatable(600f)
+    }
+
+    val offsetXL by remember {
+        mutableStateOf(initialL?.x?.plus(boxSize) ?: 0f)
+    }
+
+    val offsetYL by remember {
+        mutableStateOf(initialL?.y?.minus(boxSize) ?: 0f)
     }
 
     LaunchedEffect(key1 = navigate) {
         if (navigate) {
             delay(300)
-            Log.i("basim", " navigate ionthe go")
+            onNavigate(destination)
+            Log.i("basim", destination)
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(color = MaterialTheme.colors.primary)
             .drawBehind {
                 drawCircle(
-                    color = background,
-                    center = Offset(offsetX, offsetY),
-                    radius = circleRadius.value
+                    color = yesBackground,
+                    center = Offset(offsetXR, offsetYR),
+                    radius = circleRadiusR.value,
+                    alpha = alphaR
+                )
+
+                drawCircle(
+                    color = noBackground,
+                    center = Offset(offsetXL, offsetYL),
+                    radius = circleRadiusL.value,
+                    alpha = alphaL
                 )
             }
     ) {
         Text(
-            text = "Hai I'm a text",
-            modifier = Modifier.align(Alignment.Center)
+            text = text,
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.h4
         )
 
         Box(
             modifier = Modifier
-                .size(400.dp)
+                .fillMaxWidth(0.5f)
+                .height(200.dp)
                 .background(Color.Transparent)
                 .align(Alignment.BottomEnd)
-//                .pointerInput(Unit) {
-//                    coroutineScope {
-//                        forEachGesture {
-//                            awaitPointerEventScope {
-//                                val pointerId = awaitFirstDown().id
-//                                launch { circleRadius.animateTo(620f) }
-//                                do {
-//                                    val event = awaitPointerEvent()
-//                                    drag(pointerId = pointerId) {
-//                                        val positionOffset = it.positionChange()
-//                                        if (positionOffset.x < 0f || positionOffset.y < 0f) {
-//                                            launch {
-//                                                circleRadius.snapTo(
-//                                                    circleRadius.value + 25f
-//                                                )
-//                                            }
-//                                        }
-//                                    }
-//                                    if (circleRadius.value > maxRadius + 200f) {
-//                                        navigate = true
-//                                        launch {
-//                                            circleRadius.animateTo(
-//                                                targetValue = maxRadius * 2f + 350f,
-//                                                animationSpec = spring(
-//                                                    stiffness = Spring.StiffnessVeryLow,
-//                                                    dampingRatio = Spring.DampingRatioNoBouncy
-//                                                )
-//                                            )
-//                                        }
-//                                    } else {
-//                                        navigate = false
-//                                        launch {
-//                                            circleRadius.animateTo(
-//                                                targetValue = 600f,
-//                                                animationSpec = spring(
-//                                                    dampingRatio = Spring.DampingRatioNoBouncy,
-//                                                    stiffness = Spring.StiffnessVeryLow
-//                                                )
-//                                            )
-//                                        }
-//                                    }
-//                                } while (event.changes.any { it.pressed })
-//                            }
-//                        }
-//                    }
-//                }
-//                .pointerInteropFilter {
-//                    val mVelocityTracker = VelocityTracker()
-//                    scope.launch {
-//                        when (it.action) {
-//                            MotionEvent.ACTION_DOWN -> {
-//                                mVelocityTracker.resetTracking()
-//                                circleRadius.animateTo(700f)
-//                                touchOffset = Offset(it.x, it.y)
-//                            }
-//                            MotionEvent.ACTION_UP -> {
-//                                if (circleRadius.value > maxRadius) {
-//                                    circleRadius.animateTo(
-//                                        targetValue = maxRadius * 2f + 350f,
-//                                        animationSpec = spring(
-//                                            stiffness = Spring.StiffnessVeryLow,
-//                                            dampingRatio = Spring.DampingRatioNoBouncy
-//                                        )
-//                                    )
-//                                } else {
-//                                    circleRadius.animateTo(
-//                                        targetValue = 600f,
-//                                        animationSpec = spring(
-//                                            dampingRatio = Spring.DampingRatioNoBouncy,
-//                                            stiffness = Spring.StiffnessVeryLow
-//                                        )
-//                                    )
-//                                }
-//                            }
-//                            MotionEvent.ACTION_MOVE -> {
-//                                val currentPosition = Offset(it.x, it.y)
-//                                val positionChanged = currentPosition - touchOffset
-//                                if (positionChanged.x < 0f ||  positionChanged.y < 0f) {
-//                                    circleRadius.snapTo(
-//                                        circleRadius.value + 20f
-//                                    )
-//                                }
-//                            }
-//                        }
-//                    }
-//                    true
-//                }
                 .pointerInput(Unit) {
                     var animate = false
-                    var newRadius = 0f
+                    var newRadius: Float
                     var velocity = 0f
                     val decay = splineBasedDecay<Float>(this)
                     val velocityTracker = VelocityTracker()
@@ -209,10 +163,9 @@ fun AlternativeChoosingArc(
                             onDrag = { change, dragAmount ->
                                 if (dragAmount.x < 0 || dragAmount.y < 0) {
                                     launch {
-                                        circleRadius.snapTo(circleRadius.value + 50f)
+                                        circleRadiusR.snapTo(circleRadiusR.value + 50f)
                                     }
                                 }
-
                                 velocityTracker.addPosition(
                                     change.uptimeMillis,
                                     change.position
@@ -223,25 +176,26 @@ fun AlternativeChoosingArc(
                                 velocity = Math.max(velocityX, velocityY)
 
                                 newRadius = decay.calculateTargetValue(
-                                    initialValue = circleRadius.value,
+                                    initialValue = circleRadiusR.value,
                                     initialVelocity = velocity
                                 )
 
-                                circleRadius.updateBounds(
+                                circleRadiusR.updateBounds(
                                     upperBound = maxRadius * 2f + 350f,
                                     lowerBound = 600f
                                 )
 
-                                Log.i("basim", newRadius.toString())
-
                                 if (Math.abs(newRadius) >= maxRadius - 200f) {
                                     animate = true
                                 }
+
                             },
                             onDragEnd = {
                                 launch {
-                                    if (circleRadius.value > maxRadius || animate) {
-                                        circleRadius.animateTo(
+                                    if (circleRadiusR.value > maxRadius || animate) {
+                                        navigate = true
+                                        destination = Screen.AdviceScreen.route
+                                        circleRadiusR.animateTo(
                                             targetValue = maxRadius * 2f + 350f,
                                             animationSpec = spring(
                                                 stiffness = Spring.StiffnessVeryLow,
@@ -249,7 +203,8 @@ fun AlternativeChoosingArc(
                                             )
                                         )
                                     } else {
-                                        circleRadius.animateTo(
+                                        onDragR = false
+                                        circleRadiusR.animateTo(
                                             initialVelocity = velocity,
                                             targetValue = 600f,
                                             animationSpec = spring(
@@ -261,8 +216,9 @@ fun AlternativeChoosingArc(
                                 }
                             },
                             onDragStart = {
+                                onDragR = true
                                 launch {
-                                    circleRadius.animateTo(
+                                    circleRadiusR.animateTo(
                                         700f
                                     )
                                 }
@@ -270,6 +226,105 @@ fun AlternativeChoosingArc(
                         )
                     }
                 }
-        )
+        ) {
+            Text(
+                text = "Yes!",
+                modifier = Modifier.align(Alignment.BottomEnd)
+                    .padding(bottom = 16.dp, end = 16.dp)
+                    .alpha(alphaR),
+                style = MaterialTheme.typography.h5
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .height(200.dp)
+                .background(Color.Transparent)
+                .align(Alignment.BottomStart)
+                .pointerInput(Unit) {
+                    var animate = false
+                    var newRadius: Float
+                    var velocity = 0f
+                    val decay = splineBasedDecay<Float>(this)
+                    val velocityTracker = VelocityTracker()
+                    coroutineScope {
+                        detectDragGestures(
+                            onDrag = { change, dragAmount ->
+                                if (dragAmount.x < 0 || dragAmount.y < 0) {
+                                    launch {
+                                        circleRadiusL.snapTo(circleRadiusL.value + 50f)
+                                    }
+                                }
+                                velocityTracker.addPosition(
+                                    change.uptimeMillis,
+                                    change.position
+                                )
+
+                                val velocityX = velocityTracker.calculateVelocity().x
+                                val velocityY = velocityTracker.calculateVelocity().y
+                                velocity = Math.max(velocityX, velocityY)
+
+                                newRadius = decay.calculateTargetValue(
+                                    initialValue = circleRadiusL.value,
+                                    initialVelocity = velocity
+                                )
+
+                                circleRadiusL.updateBounds(
+                                    upperBound = maxRadius * 2f + 350f,
+                                    lowerBound = 600f
+                                )
+
+                                if (Math.abs(newRadius) >= maxRadius - 200f) {
+                                    animate = true
+                                }
+
+                            },
+                            onDragEnd = {
+                                launch {
+                                    if (circleRadiusL.value > maxRadius || animate) {
+                                        navigate = true
+                                        destination = Screen.NonAdviceScreen.route
+                                        navigate = true
+                                        circleRadiusL.animateTo(
+                                            targetValue = maxRadius * 2f + 350f,
+                                            animationSpec = spring(
+                                                stiffness = Spring.StiffnessVeryLow,
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                            )
+                                        )
+                                    } else {
+                                        onDragL = false
+                                        circleRadiusL.animateTo(
+                                            initialVelocity = velocity,
+                                            targetValue = 600f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessVeryLow
+                                            )
+                                        )
+                                    }
+                                }
+                            },
+                            onDragStart = {
+                                onDragL = true
+                                launch {
+                                    circleRadiusL.animateTo(
+                                        700f
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+        ) {
+            Text(
+                text = "No!",
+                modifier = Modifier.align(Alignment.BottomStart)
+                    .padding(bottom = 16.dp, start = 16.dp)
+                    .alpha(alpha = alphaL),
+                style = MaterialTheme.typography.h5
+            )
+        }
     }
 }
