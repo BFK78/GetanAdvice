@@ -54,3 +54,12 @@ fun AdviseScreen(
         }
     }
 }
+
+
+// go to the main branch
+
+// remove animation from navigation
+
+// change the status bar color
+
+// Add a small splash screen
